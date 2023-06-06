@@ -4,6 +4,8 @@ namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiResource;
 use App\Repository\UserRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
@@ -27,39 +29,48 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(length: 180, unique: true)]
     #[Assets\NotBlank]
     #[Assets\Email]
-    #[Groups(['user:read','user:write','club:write'])]
+    #[Groups(['user:read', 'user:write', 'club:write'])]
     private ?string $email = null;
 
     #[ORM\Column]
     private array $roles = [];
 
-    /**
-     * @var string The hashed password
-     */
     #[ORM\Column]
-    #[Groups(['user:read','user:write','club:write'])]
+    #[Groups(['user:read', 'user:write', 'club:write'])]
     private ?string $password = null;
 
     #[ORM\Column(length: 50)]
-    #[Groups(['user:read','user:write','club:write'])]
+    #[Groups(['user:read', 'user:write', 'club:write'])]
     private ?string $firstName = null;
 
     #[ORM\Column(length: 50)]
-    #[Groups(['user:read','user:write','club:write'])]
+    #[Groups(['user:read', 'user:write', 'club:write'])]
     private ?string $lastName = null;
 
     #[ORM\Column(length: 50, nullable: true)]
-    #[Groups(['user:read','user:write','club:write'])]
+    #[Groups(['user:read', 'user:write', 'club:write'])]
     private ?string $city = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
-    #[Groups(['user:read','user:write','club:write'])]
+    #[Groups(['user:read', 'user:write', 'club:write'])]
     private ?string $address = null;
 
     #[ORM\ManyToOne(inversedBy: 'users')]
     #[ORM\JoinColumn(nullable: true)]
     #[Groups(['user:read'])]
     private ?Club $club = null;
+
+    #[ORM\ManyToOne(inversedBy: 'participants')]
+    private ?Events $events = null;
+
+    #[ORM\OneToMany(mappedBy: 'ownedBy', targetEntity: ApiToken::class)]
+    private Collection $apiToken;
+
+    public function __construct()
+    {
+        $this->expiresAt = new ArrayCollection();
+        $this->apiToken = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -125,7 +136,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     /**
      * @see UserInterface
      */
-    public function eraseCredentials()
+    public function eraseCredentials(): void
     {
         // If you store any temporary, sensitive data on the user, clear it here
         // $this->plainPassword = null;
@@ -188,6 +199,78 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setClub(?Club $club): self
     {
         $this->club = $club;
+
+        return $this;
+    }
+
+    public function getEvents(): ?Events
+    {
+        return $this->events;
+    }
+
+    public function setEvents(?Events $events): self
+    {
+        $this->events = $events;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, ApiToken>
+     */
+    public function getExpiresAt(): Collection
+    {
+        return $this->expiresAt;
+    }
+
+    public function addExpiresAt(ApiToken $expiresAt): self
+    {
+        if (!$this->expiresAt->contains($expiresAt)) {
+            $this->expiresAt->add($expiresAt);
+            $expiresAt->setOwnedBy($this);
+        }
+
+        return $this;
+    }
+
+    public function removeExpiresAt(ApiToken $expiresAt): self
+    {
+        if ($this->expiresAt->removeElement($expiresAt)) {
+            // set the owning side to null (unless already changed)
+            if ($expiresAt->getOwnedBy() === $this) {
+                $expiresAt->setOwnedBy(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, ApiToken>
+     */
+    public function getApiToken(): Collection
+    {
+        return $this->apiToken;
+    }
+
+    public function addApiToken(ApiToken $apiToken): self
+    {
+        if (!$this->apiToken->contains($apiToken)) {
+            $this->apiToken->add($apiToken);
+            $apiToken->setOwnedBy($this);
+        }
+
+        return $this;
+    }
+
+    public function removeApiToken(ApiToken $apiToken): self
+    {
+        if ($this->apiToken->removeElement($apiToken)) {
+            // set the owning side to null (unless already changed)
+            if ($apiToken->getOwnedBy() === $this) {
+                $apiToken->setOwnedBy(null);
+            }
+        }
 
         return $this;
     }

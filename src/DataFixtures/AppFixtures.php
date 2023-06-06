@@ -2,6 +2,7 @@
 
 namespace App\DataFixtures;
 
+use App\Factory\ApiTokenFactory;
 use App\Factory\EventsCategoriesFactory;
 use App\Factory\UserFactory;
 use Doctrine\Bundle\FixturesBundle\Fixture;
@@ -11,7 +12,12 @@ class AppFixtures extends Fixture
 {
     public function load(ObjectManager $manager): void
     {
-        EventsCategoriesFactory::createMany(100);
-        UserFactory::createMany(5);
+        UserFactory::createMany(10);
+        ApiTokenFactory::createMany(10,function (){
+            return[
+                'ownedBy'=>UserFactory::random()
+            ];
+        });
     }
 }
+

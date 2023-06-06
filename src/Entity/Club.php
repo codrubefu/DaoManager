@@ -4,6 +4,7 @@ namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Post;
 use App\Repository\ClubRepository;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -16,6 +17,7 @@ use Symfony\Component\Validator\Constraints as Assets;
 #[ApiResource(
     operations: [
         new Get(),
+        new GetCollection(),
         new Post()
     ],
     normalizationContext:['groups'=>['club:read']],
@@ -47,6 +49,9 @@ class Club
     #[ORM\OneToMany(mappedBy: 'club', targetEntity: User::class,cascade: ['persist'])]
     #[Groups(['club:write','club:read'])]
     private Collection $users;
+
+    #[ORM\ManyToOne(inversedBy: 'club')]
+    private ?Events $events = null;
 
     public function __construct()
     {
@@ -120,6 +125,18 @@ class Club
                 $user->setClub(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getEvents(): ?Events
+    {
+        return $this->events;
+    }
+
+    public function setEvents(?Events $events): self
+    {
+        $this->events = $events;
 
         return $this;
     }
